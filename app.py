@@ -4,11 +4,15 @@ from twilio.rest import Client
 from flask import Flask, request, render_template, redirect, session, url_for
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
+from werkzeug.utils import secure_filename
+from workers import pdf2text, txt2questions
 
+UPLOAD_FOLDER = './pdf/'
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = 'secretkeyfordungeon'
 app.config.from_object('settings')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN= os.environ.get('TWILIO_AUTH_TOKEN')
@@ -59,6 +63,59 @@ def check_verification_token(phone, token):
         .verification_checks \
         .create(to=phone, code=token)    
     return check.status == 'approved'
+
+
+@ app.route('/upload')
+def upload():
+    """ The landing page for the app """
+    return render_template('upload.html')
+
+
+@ app.route('/quiz', methods=['GET', 'POST'])
+def quiz():
+    """ Handle upload and conversion of file + other stuff """
+
+    UPLOAD_STATUS = False
+    questions = dict()
+
+    # Make directory to store uploaded files, if not exists
+    if not os.path.isdir('./pdf'):
+        os.mkdir('./pdf')
+
+    if request.method == 'POST':
+        try:
+            # Retrieve file from request
+            uploaded_file = request.files['file']
+            file_path = os.path.join(
+                app.config['UPLOAD_FOLDER'],
+                secure_filename(
+                    uploaded_file.filename))
+            file_exten = uploaded_file.filename.rsplit('.', 1)[1].lower()
+
+            # Save uploaded file
+            uploaded_file.save(file_path)
+            # Get contents of file
+            uploaded_content = pdf2text(file_path, file_exten)
+            questions = txt2questions(uploaded_content)
+
+            # File upload + convert success
+            if uploaded_content is not None:
+                UPLOAD_STATUS = True
+        except Exception as e:
+            print(e)
+    return render_template(
+        'quiz.html',
+        uploaded=UPLOAD_STATUS,
+        questions=questions,
+        size=len(questions))
+
+
+@app.route('/result', methods=['POST', 'GET'])
+def result():
+    correct_q = 0
+    for k, v in request.form.items():
+        correct_q += 1
+    return render_template('result.html', total=5, correct=correct_q)
 
 
 '''
@@ -160,3 +217,15 @@ def login():
         'token': token.to_jwt().decode(),
     }
 '''
+
+
+
+
+
+
+
+
+
+
+
+
