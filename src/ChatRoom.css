@@ -1,0 +1,27 @@
+#chatrooms {
+  border-right: 1px solid black;
+  width: 20%;
+  padding-right: 5px;
+}
+
+.chatroom {
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  margin-right: 5px;
+  padding: 5px;
+  border: 0;
+  background: rgb(188, 190, 189);
+}
+
+.chatroom:hover {
+  background: rgb(189, 120, 120);
+}
+
+.chatroom:focus {
+  outline: 0;
+}
+
+.chatroom.selected {
+  background: rgb(97, 224, 65);
+}

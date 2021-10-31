@@ -1,19 +1,69 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Successful Login!</title>
-  </head>
-  <body>
-    <div class="container">
-      <h1 class="title">
-        {{username}}'s Profile
-      </h1>
-      <h2 class="subtitle">
-        Thanks for protecting your account! 
-      </h2>
-      <h1 class="quiz"><a href="/upload">quiz</a></h1>
-    </div>
-  </body>
+<head>
+	<title>Dashboard</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='css/dash.css') }}" />
+</head>
+<body>
+	<input type="checkbox" id="checkbox">
+	<header class="header">
+		<h2 class="u-name">SPROUT <b>EDU</b>
+			<label for="checkbox">
+				<i id="navbtn" class="fa fa-bars" aria-hidden="true"></i>
+			</label>
+		</h2>
+		<i class="fa fa-user" aria-hidden="true"></i>
+	</header>
+	<div class="body">
+		<nav class="side-bar">
+			<div class="user-p">
+				<h4>{{username}}</h4>
+			</div>
+			<ul>
+				<li>
+					<a href="#">
+						<i class="fa fa-desktop" aria-hidden="true"></i>
+						<span>Dashboard</span>
+					</a>
+				</li>
+				<li>
+					<a href="upload">
+						<i class="fa fa-envelope-o" aria-hidden="true"></i>
+						<span>Quiz</span>
+					</a>
+				</li>
+				<li>
+					<a href="http://localhost:3000">
+						<i class="fa fa-comment-o" aria-hidden="true"></i>
+						<span>World Chat</span>
+					</a>
+				</li>
+				<li>
+					<a href="/snip">
+						<i class="fa fa-info-circle" aria-hidden="true"></i>
+						<span>Snip & Share</span>
+					</a>
+				</li>
+				<li>
+					<a href="#">
+						<i class="fa fa-cog" aria-hidden="true"></i>
+						<span>Setting</span>
+					</a>
+				</li>
+				<li>
+					<a href="/">
+						<i class="fa fa-power-off" aria-hidden="true"></i>
+						<span>Logout</span>
+					</a>
+				</li>
+			</ul>
+		</nav>
+		<section class="section-1">
+			<h1>WELCOME</h1>
+			<p>{{username}}</p>
+		</section>
+	</div>
+
+</body>
 </html>

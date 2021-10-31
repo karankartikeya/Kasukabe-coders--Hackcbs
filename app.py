@@ -1,11 +1,15 @@
 import os
+import click
 from dotenv import load_dotenv
 from twilio.rest import Client
 from flask import Flask, request, render_template, redirect, session, url_for
+from flask.cli import AppGroup
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 from werkzeug.utils import secure_filename
 from workers import pdf2text, txt2questions
+from twilio.jwt.access_token import AccessToken
+from twilio.jwt.access_token.grants import ChatGrant
 
 UPLOAD_FOLDER = './pdf/'
 load_dotenv()
@@ -13,14 +17,55 @@ app = Flask(__name__)
 app.secret_key = 'secretkeyfordungeon'
 app.config.from_object('settings')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+twilio_client = Client()
+chatrooms_cli = AppGroup('chatrooms', help='Manage your chat rooms.')
+app.cli.add_command(chatrooms_cli)
 
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN= os.environ.get('TWILIO_AUTH_TOKEN')
 VERIFY_SERVICE_SID= os.environ.get('VERIFY_SERVICE_SID')
+twilio_api_key_sid = os.environ.get('TWILIO_API_KEY_SID')
+twilio_api_key_secret = os.environ.get('TWILIO_API_KEY_SECRET')
 
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 KNOWN_PARTICIPANTS = app.config['KNOWN_PARTICIPANTS']
+
+@chatrooms_cli.command('list', help='list all chat rooms')
+def list():
+    conversations = twilio_client.conversations.conversations.list()
+    for conversation in conversations:
+        print(f'{conversation.friendly_name} ({conversation.sid})')
+
+
+@chatrooms_cli.command('create', help='create a chat room')
+@click.argument('name')
+def create(name):
+    conversation = None
+    for conv in twilio_client.conversations.conversations.list():
+        if conv.friendly_name == name:
+            conversation = conv
+            break
+    if conversation is not None:
+        print('Chat room already exists')
+    else:
+        twilio_client.conversations.conversations.create(friendly_name=name)
+
+
+@chatrooms_cli.command('delete', help='delete a chat room')
+@click.argument('name')
+def delete(name):
+    conversation = None
+    for conv in twilio_client.conversations.conversations.list():
+        if conv.friendly_name == name:
+            conversation = conv
+            break
+    if conversation is None:
+        print('Chat room not found')
+    else:
+        conversation.delete()
+
+
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -117,6 +162,46 @@ def result():
         correct_q += 1
     return render_template('result.html', total=5, correct=correct_q)
 
+@app.route('/login', methods=['POST'])
+def login1():
+    payload = request.get_json(force=True)
+    username = payload.get('username')
+    if not username:
+        abort(401)
+
+    # create the user (if it does not exist yet)
+    participant_role_sid = None
+    for role in twilio_client.conversations.roles.list():
+        if role.friendly_name == 'participant':
+            participant_role_sid = role.sid
+    try:
+        twilio_client.conversations.users.create(identity=username,
+                                                 role_sid=participant_role_sid)
+    except TwilioRestException as exc:
+        if exc.status != 409:
+            raise
+
+    # add the user to all the conversations
+    conversations = twilio_client.conversations.conversations.list()
+    for conversation in conversations:
+        try:
+            conversation.participants.create(identity=username)
+        except TwilioRestException as exc:
+            if exc.status != 409:
+                raise
+    
+    service_sid = conversations[0].chat_service_sid
+    token = AccessToken(TWILIO_ACCOUNT_SID, twilio_api_key_sid,
+                        twilio_api_key_secret, identity=username)
+    token.add_grant(ChatGrant(service_sid=service_sid))
+
+    # send a response
+    return {
+        'chatrooms': [[conversation.friendly_name, conversation.sid]
+                      for conversation in conversations],
+        'token': token.to_jwt().decode(),
+    }
+
 
 '''
 import os
@@ -205,10 +290,10 @@ def login():
     twilio_account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
     twilio_api_key_sid = os.environ.get('TWILIO_API_KEY_SID')
     twilio_api_key_secret = os.environ.get('TWILIO_API_KEY_SECRET')
-    service_sid = conversations[0].chat_service_sid
+    VERIFY_SERVICE_SID = conversations[0].chat_VERIFY_SERVICE_SID
     token = AccessToken(twilio_account_sid, twilio_api_key_sid,
                         twilio_api_key_secret, identity=username)
-    token.add_grant(ChatGrant(service_sid=service_sid))
+    token.add_grant(ChatGrant(VERIFY_SERVICE_SID=VERIFY_SERVICE_SID))
 
     # send a response
     return {
