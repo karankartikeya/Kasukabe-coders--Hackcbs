@@ -13,3 +13,18 @@ The current project has been able to provide only two features that are: Edu Qui
 ### FEATURES: 
 * Edu Quiz: This is a smart Quiz Generator that generates a dynamic quiz from any uploaded text/PDF document using NLP. This can be used for self-analysis, question paper generation, and evaluation, thus reducing human effort. 
 * World Chat: This is a Twilio communications-based feature that offers students to learn in public and ask doubts related to the various topics according to the channels
+
+### WHAT WE LEARNED:
+We learned a lot of new things such as:
+1. Work-time Management 
+2. Integration of Twilio for authentication and World Chat 
+3. Using NLTK and NLP for the first time in a live project.
+4. Integrating React in frontend and Python in the backend and also using HTML, CSS as our frontend team member had the knowledge of that only.
+
+### CONTRIBUTION OF TEAM: 
+1. ASHUTOSH BAUNTHIYAL: FRONTEND DEVELOPER (Developed the Authentication page and dashboard)
+2. KARAN KARTIKEYA: BACKEND DEVELOPER (Integrated the Twilio communications service and machine learning in the world chat and Edu Quiz respectively)
+3. PRIYANSHU BIST: FRONTEND DEVELOPER (Developed the Quiz and world chat page)
+
+### UPCOMING UPDATES:
+The updates would cover enhancements in the world chat. The UI would be made more interactive and easy to use for the students.
